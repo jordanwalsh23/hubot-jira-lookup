@@ -48,25 +48,25 @@ module.exports = (robot) ->
               json_summary = json.fields.summary
           json_description = ""
           if json.fields.description
-            json_description = "\n Description: "
+            json_description = "\n *Description*: "
             unless json.fields.description is null or json.fields.description.nil? or json.fields.description.empty?
               desc_array = json.fields.description.split("\n")
               for item in desc_array[0..2]
                 json_description += item
           json_assignee = ""
           if json.fields.assignee
-            json_assignee = "\n Assignee:    "
+            json_assignee = "\n *Assignee*:    "
             unless json.fields.assignee is null or json.fields.assignee.nil? or json.fields.assignee.empty?
               unless json.fields.assignee.name.nil? or json.fields.assignee.name.empty?
                 json_assignee += json.fields.assignee.name
           json_status = ""
           if json.fields.status
-            json_status = "\n Status:      "
+            json_status = "\n *Status*:      "
             unless json.fields.status is null or json.fields.status.nil? or json.fields.status.empty?
               unless json.fields.status.name.nil? or json.fields.status.name.empty?
                 json_status += json.fields.status.name
           if process.env.HUBOT_SLACK_INCOMING_WEBHOOK?
-            msg.send "Looks like incoming webhook is enabled!"
+            msg.send "Here's some handy Jira information for you. Enjoy."
             robot.emit 'slack.attachment',
               message: msg.message
               content:
@@ -95,10 +95,10 @@ module.exports = (robot) ->
                   }
                 ]
           else
-            msg.send "Not sure how i got here..."
-            msg.send "Issue:       #{json.key}: #{json_summary}#{json_description}#{json_assignee}#{json_status}\n Link:        #{process.env.HUBOT_JIRA_LOOKUP_URL}/browse/#{json.key}\n"
+            msg.send "Here's some handy Jira information for you. Enjoy."
+            msg.send "*#{json.key}*: #{json_summary}#{json_description}#{json_assignee}#{json_status}\n *Link*:        #{process.env.HUBOT_JIRA_LOOKUP_URL}/browse/#{json.key}\n"
         catch error
-          msg.send "Something went wrong with the jira lookup.. check the logs"
+          msg.send "Something went wrong with the jira lookup.. get @jordan.walsh to check the logs for you, he's good at that sort of thing."
           
           if json != null 
             console.log json
