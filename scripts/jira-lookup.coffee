@@ -98,5 +98,7 @@ module.exports = (robot) ->
           
           if json != null 
             console.log json
-          
+
+          console.log res
+          console.log err
           console.log "Issue #{issue} not found"
