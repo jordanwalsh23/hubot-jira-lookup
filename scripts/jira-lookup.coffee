@@ -24,7 +24,7 @@ module.exports = (robot) ->
   if ignored_users == undefined
     ignored_users = "jira|github"
 
-  robot.hear /\b(BACK|ITERATION|PM|SYS|SERVICES)-[0-9]{1,5}\b/, (msg) ->
+  robot.hear /\b(BACK|ITERATION|PM|SYS|SERVICES)-[0-9]{1,5}\b/i, (msg) ->
 
     return if msg.message.user.name.match(new RegExp(ignored_users, "gi"))
 
@@ -62,6 +62,7 @@ module.exports = (robot) ->
               unless json.fields.status.name.nil? or json.fields.status.name.empty?
                 json_status += json.fields.status.name
           if process.env.HUBOT_SLACK_INCOMING_WEBHOOK?
+            msg.send "Looks like incoming webhook is enabled!"
             robot.emit 'slack.attachment',
               message: msg.message
               content:
@@ -90,6 +91,9 @@ module.exports = (robot) ->
                   }
                 ]
           else
+            msg.send "Not sure how i got here..."
             msg.send "Issue:       #{json.key}: #{json_summary}#{json_description}#{json_assignee}#{json_status}\n Link:        #{process.env.HUBOT_JIRA_LOOKUP_URL}/browse/#{json.key}\n"
         catch error
+          msg.send "Something went wrong with the jira lookup.. check the logs"
+          unless json is null console.log json
           console.log "Issue #{issue} not found"
