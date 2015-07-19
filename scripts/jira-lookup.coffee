@@ -95,5 +95,8 @@ module.exports = (robot) ->
             msg.send "Issue:       #{json.key}: #{json_summary}#{json_description}#{json_assignee}#{json_status}\n Link:        #{process.env.HUBOT_JIRA_LOOKUP_URL}/browse/#{json.key}\n"
         catch error
           msg.send "Something went wrong with the jira lookup.. check the logs"
-          unless json is null console.log json
+          
+          if json != null 
+            console.log json
+          
           console.log "Issue #{issue} not found"
