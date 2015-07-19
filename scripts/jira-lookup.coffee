@@ -92,4 +92,4 @@ module.exports = (robot) ->
           else
             msg.send "Issue:       #{json.key}: #{json_summary}#{json_description}#{json_assignee}#{json_status}\n Link:        #{process.env.HUBOT_JIRA_LOOKUP_URL}/browse/#{json.key}\n"
         catch error
-          console.log "Issue #{json.key} not found"
+          console.log "Issue #{issue} not found"
