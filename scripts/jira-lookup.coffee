@@ -32,6 +32,10 @@ module.exports = (robot) ->
     user = process.env.HUBOT_JIRA_LOOKUP_USERNAME
     pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
     url = process.env.HUBOT_JIRA_LOOKUP_URL
+
+    #hack to get jira working
+    process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
+
     auth = 'Basic ' + new Buffer(user + ':' + pass).toString('base64')
     robot.http("#{url}/rest/api/latest/issue/#{issue}")
       .headers(Authorization: auth, Accept: 'application/json')
