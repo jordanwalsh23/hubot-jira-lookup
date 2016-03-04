@@ -137,6 +137,8 @@ reportIssue = (robot, msg, issue) ->
         try
           json = JSON.parse(body)
 
+          console.log json
+
           data = {
             'key': {
               key: 'Key'
