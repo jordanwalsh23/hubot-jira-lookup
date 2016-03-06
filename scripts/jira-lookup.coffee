@@ -155,27 +155,30 @@ approveIssue = (robot, msg, issue) ->
               if t.name == "Request 1st Approval" || t.name == "Request 2nd Approval" 
                 transitionId = t.id
 
+                #TODO: Update body to include 
                 data = {
-                  "update": {
-                    "comment": [
-                      {
-                        "add": {
-                            "body": "Approved by: #{msg.message.user.name}"
-                        }
+                  update : {
+                    comment : [{
+                      add : {
+                        body: "Approved by #{msg.message.user.name} (via slack)"
                       }
-                    ]
+                    }]
                   },
-                  "transition": {
-                      "id": "#{transitionId}"
+                  transition: {
+                      id: "#{transitionId}"
                   }
                 }
 
-                console.log data
+                console.log JSON.stringify(data)
 
-                robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions?transitionId=#{transitionId}")
-                  .headers(Authorization: auth, Content-Type: 'application/json', Accept: 'application/json')
-                  .post(data) (err, res, body) ->
-                    console.log res
+                robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
+                  .header("Authorization", auth)
+                  .header("Content-Type", 'application/json')
+                  .header("Accept", 'application/json')
+                  .post(JSON.stringify(data)) (err, res, body) ->
+                    console.log "err is: #{err}"
+                    console.log "res is #{res}"
+                    console.log "body is #{body}"
 
 
 searchIssues = (robot, msg) ->
