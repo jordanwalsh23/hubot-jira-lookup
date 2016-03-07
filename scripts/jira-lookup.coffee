@@ -82,9 +82,8 @@ difference = (obj1, obj2) ->
   for room, pref of obj1
     diff[room] = pref if room !of obj2
   return diff
-  
 
-  
+#-----------------------------------------------------------------------------#
 
 module.exports = (robot) ->
   robot.brain.data.jiralookupprefs or= {}
@@ -97,9 +96,11 @@ module.exports = (robot) ->
 
   #console.log "Ignore Users: #{ignored_users}"
 
+  #Allows a user to modify whether they should display short or long form descriptions
   robot.respond /set jira_lookup_style (long|short)/, (msg) ->
     SetRoomStylePref robot, msg, msg.match[1]
 
+  #Responds to any Jira ticket ID
   robot.hear /\b[a-zA-Z]{2,12}-[0-9]{1,10}\b/g, (msg) ->
 
     return if msg.message.user.name.match(new RegExp(ignored_users, "gi"))
@@ -109,9 +110,19 @@ module.exports = (robot) ->
 
     reportIssue robot, msg, issue for issue in msg.match
 
+  #Display the approvers that are being used
+  robot.hear /(show)?\s?approvers/, (msg) ->
+    firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
+    secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco"]
+
+    msg.send "Technical Approvers: #{firstApprovers}"
+    msg.send "Business Approvers: #{secondApprovers}"
+
+  #Displays a listing of the pending CRs from JIRA
   robot.hear /pending crs/, (msg) ->
     searchIssues robot, msg
 
+  #Transition a CR through the workflow
   robot.hear /approve\s(\b[a-zA-Z]{2,12}-[0-9]{1,10}\b)/, (msg) ->
     issue = ""
 
@@ -128,6 +139,9 @@ approveIssue = (robot, msg, issue) ->
   user = process.env.HUBOT_JIRA_LOOKUP_USERNAME
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
   url = process.env.HUBOT_JIRA_LOOKUP_URL
+
+  firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali","Shell"]
+  secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco","Shell"]
   
   #hack to get jira working
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
@@ -152,33 +166,64 @@ approveIssue = (robot, msg, issue) ->
             #find the approval transition
 
             for t in transitions
-              if t.name == "Request 1st Approval" || t.name == "Request 2nd Approval" 
+              if t.name == "Approve (1st)"
                 transitionId = t.id
 
-                #TODO: Update body to include 
-                data = {
-                  update : {
-                    comment : [{
-                      add : {
-                        body: "Approved by #{msg.message.user.name} (via slack)"
-                      }
-                    }]
-                  },
-                  transition: {
-                      id: "#{transitionId}"
+                currentUser = msg.message.user.name
+
+                if currentUser in firstApprovers
+                  data = {
+                    update : {
+                      comment : [{
+                        add : {
+                          body: "1st Approval by #{msg.message.user.name} (via slack)"
+                        }
+                      }]
+                    },
+                    transition: {
+                        id: "#{transitionId}"
+                    }
                   }
-                }
 
-                console.log JSON.stringify(data)
+                  console.log JSON.stringify(data)
 
-                robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
-                  .header("Authorization", auth)
-                  .header("Content-Type", 'application/json')
-                  .header("Accept", 'application/json')
-                  .post(JSON.stringify(data)) (err, res, body) ->
-                    console.log "err is: #{err}"
-                    console.log "res is #{res}"
-                    console.log "body is #{body}"
+                  robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
+                    .header("Authorization", auth)
+                    .header("Content-Type", 'application/json')
+                    .header("Accept", 'application/json')
+                    .post(JSON.stringify(data)) (err, res, body) ->
+                      msg.send "#{issue} has been approved. Awaiting 2nd Approval."
+                else 
+                  msg.send "#{msg.message.user.name} is not a 1st Approver. Please contact @romilly for further information"
+              else if t.name == "Approve (2nd)"
+                transitionId = t.id
+
+                currentUser = msg.message.user.name
+
+                if currentUser in secondApprovers
+                  data = {
+                    update : {
+                      comment : [{
+                        add : {
+                          body: "2nd Approval by #{msg.message.user.name} (via slack)"
+                        }
+                      }]
+                    },
+                    transition: {
+                        id: "#{transitionId}"
+                    }
+                  }
+
+                  console.log JSON.stringify(data)
+
+                  robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
+                    .header("Authorization", auth)
+                    .header("Content-Type", 'application/json')
+                    .header("Accept", 'application/json')
+                    .post(JSON.stringify(data)) (err, res, body) ->
+                      msg.send "#{issue} has been approved. Ready for implementation."
+                else 
+                  msg.send "#{msg.message.user.name} is not a 2nd Approver. Please contact @romilly for further information"
 
 
 searchIssues = (robot, msg) ->
@@ -210,14 +255,14 @@ searchIssues = (robot, msg) ->
           msg.send "There are #{total} CRs awaiting approval."
 
         for issue in json.issues
-          key = issue.key
-          summary = issue.fields.summary
-          issueType = issue.fields.issuetype.name
-          requestor = issue.fields.reporter.displayName
-          assignee = issue.fields.assignee.displayName
-          startDate = issue.fields.customfield_12431
-          status = issue.fields.status.name
-          risk = issue.fields.customfield_12432.value
+          key = issue.key || ""
+          summary = issue.fields.summary || ""
+          issueType = issue.fields.issuetype.name || ""
+          requestor = issue.fields.reporter.displayName || ""
+          assignee = issue.fields.assignee.displayName || ""
+          startDate = issue.fields.customfield_12431 || ""
+          status = issue.fields.status.name || ""
+          risk = if issue.fields.customfield_12432 then issue.fields.customfield_12432.value else ""
 
           msg.send "#{key}: #{summary} (#{status})\nRequestor: #{requestor}\nRisk: #{risk}\nScheduled Start: #{startDate}\n"
 
