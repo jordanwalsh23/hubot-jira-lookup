@@ -231,8 +231,8 @@ searchIssues = (robot, msg) ->
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
   url = process.env.HUBOT_JIRA_LOOKUP_URL
 
-  #filter = "project+%3D+\"Change+Request\"+AND+status+not+in+(Closed,+Approved)"
-  filter = "project+%3D+\"Change+Request\""
+  filter = "project+%3D+\"Change+Request\"+AND+status+not+in+(Closed,+Approved,+Declined)"
+  #filter = "project+%3D+\"Change+Request\""
   
   #hack to get jira working
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
@@ -264,7 +264,7 @@ searchIssues = (robot, msg) ->
           status = issue.fields.status.name || ""
           risk = if issue.fields.customfield_12432 then issue.fields.customfield_12432.value else ""
 
-          msg.send "#{key}: #{summary} (#{status})\nRequestor: #{requestor}\nRisk: #{risk}\nScheduled Start: #{startDate}\n"
+          msg.send "*#{key}: #{summary} (#{status})*\nRequestor: #{requestor}\nRisk: #{risk}\nScheduled Start: #{startDate}\n"
 
       catch error
         msg.send "Something went wrong with the jira lookup.. get @jordan.walsh to check the logs for you."
