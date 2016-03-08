@@ -126,7 +126,7 @@ module.exports = (robot) ->
   #Displays a listing of the pending CRs from JIRA
   robot.hear /pending crs/i, (msg) ->
 
-    filter = "project+%3D+\"Change+Request\"+AND+status+not+in+(Open,+Closed,+Approved,+Declined)+order+by+created+asc"
+    filter = "project+%3D+\"Change+Request\"+AND+status+in+(\"First+Approval\",\"Second+Approval\")+order+by+created+asc"
     msg.send "_Searching jira for CRs that are awaiting approval_\n"
     searchIssues robot, msg, filter
 
