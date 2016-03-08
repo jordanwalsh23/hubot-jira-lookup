@@ -16,11 +16,16 @@
 #
 # Commands:
 #   hubot set jira_lookup_style [long|short]
+#   hubot show approvers
+#   hubot pending crs
+#   hubot approved crs
+#   hubot approve CR-XX [comment]
 #
 # Author:
 #   Matthew Finlayson <matthew.finlayson@jivesoftware.com> (http://www.jivesoftware.com)
 #   Benjamin Sherman  <benjamin@jivesoftware.com> (http://www.jivesoftware.com)
 #   Dustin Miller <dustin@sharepointexperts.com> (http://sharepointexperience.com)
+#   Jordan Walsh <jwalsh@whispir.com>
 
 ## Prevent the bot sending the jira ticket details too often in any channel
 
@@ -112,8 +117,8 @@ module.exports = (robot) ->
 
   #Display the approvers that are being used
   robot.hear /(show)?\s?approvers/i, (msg) ->
-    firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali","Shell"]
-    secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco","Shell"]
+    firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
+    secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco"]
 
     msg.send "*First Approvers (Technical)*: #{firstApprovers}"
     msg.send "*Second Approvers (Business)*: #{secondApprovers}"
@@ -156,8 +161,8 @@ approveIssue = (robot, msg, issue, comment) ->
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
   url = process.env.HUBOT_JIRA_LOOKUP_URL
 
-  firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali","Shell"]
-  secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco","Shell"]
+  firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
+  secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco"]
   
   #hack to get jira working
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
