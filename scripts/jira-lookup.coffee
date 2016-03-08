@@ -101,7 +101,7 @@ module.exports = (robot) ->
     SetRoomStylePref robot, msg, msg.match[1]
 
   #Responds to any Jira ticket ID
-  robot.hear /\b[a-zA-Z]{2,12}-[0-9]{1,10}\b/g, (msg) ->
+  robot.hear /\b[a-zA-Z]{2,12}-[0-9]{1,10}\b/ig, (msg) ->
 
     return if msg.message.user.name.match(new RegExp(ignored_users, "gi"))
     return if msg.message.match(new RegExp("^approve", "gi"))
@@ -111,30 +111,46 @@ module.exports = (robot) ->
     reportIssue robot, msg, issue for issue in msg.match
 
   #Display the approvers that are being used
-  robot.hear /(show)?\s?approvers/, (msg) ->
-    firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
-    secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco"]
+  robot.hear /(show)?\s?approvers/i, (msg) ->
+    firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali","Shell"]
+    secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco","Shell"]
 
-    msg.send "Technical Approvers: #{firstApprovers}"
-    msg.send "Business Approvers: #{secondApprovers}"
+    msg.send "*First Approvers (Technical)*: #{firstApprovers}"
+    msg.send "*Second Approvers (Business)*: #{secondApprovers}"
 
   #Displays a listing of the pending CRs from JIRA
-  robot.hear /pending crs/, (msg) ->
-    searchIssues robot, msg
+  robot.hear /pending crs/i, (msg) ->
+
+    filter = "project+%3D+\"Change+Request\"+AND+status+not+in+(Open,+Closed,+Approved,+Declined)+order+by+created+asc"
+    msg.send "_Searching jira for CRs that are awaiting approval_\n"
+    searchIssues robot, msg, filter
+
+  #Displays a listing of the pending CRs from JIRA
+  robot.hear /approved crs/i, (msg) ->
+
+    filter = "project+%3D+\"Change+Request\"+and+status+in+(\"Ready+for+Implementation\",+Implemented)+and+createdDate+>+startOfWeek()+order+by+createdDate+asc"
+    msg.send "_Searching jira for CRs that have been approved or implemented this week_\n"
+    searchIssues robot, msg, filter
 
   #Transition a CR through the workflow
-  robot.hear /approve\s(\b[a-zA-Z]{2,12}-[0-9]{1,10}\b)/, (msg) ->
+  robot.hear /approve\s(\b[a-zA-Z]{2,12}-[0-9]{1,10}\b)\s?(.*)/i, (msg) ->
     issue = ""
+    comment = ""
 
+    #Get the issue key
     if msg.match.length > 0
       issue = msg.match[1]
+
+    #Get the comment
+    if msg.match.length > 1
+      comment = msg.match[2]
 
     if issue == ""
       msg.send "No issue provided for approval. Format is: approve \"issuekey\""
     else
-      approveIssue robot, msg, issue
+      approveIssue robot, msg, issue, comment
 
-approveIssue = (robot, msg, issue) ->
+approveIssue = (robot, msg, issue, comment) ->
 
   user = process.env.HUBOT_JIRA_LOOKUP_USERNAME
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
@@ -165,74 +181,64 @@ approveIssue = (robot, msg, issue) ->
           else 
             #find the approval transition
 
+            transition = false
+            err = false
+            message = ""
+
             for t in transitions
-              if t.name == "Approve (1st)"
-                transitionId = t.id
+              transitionId = t.id
 
-                currentUser = msg.message.user.name
+              transitionData = {
+                transition: {
+                    id: "#{transitionId}"
+                }
+              }
 
-                if currentUser in firstApprovers
-                  data = {
-                    update : {
-                      comment : [{
-                        add : {
-                          body: "1st Approval by #{msg.message.user.name} (via slack)"
-                        }
-                      }]
-                    },
-                    transition: {
-                        id: "#{transitionId}"
-                    }
-                  }
+              currentUser = msg.message.user.name
 
-                  console.log JSON.stringify(data)
+              if comment != "" then comment = currentUser + ": " + comment + "\n\n"
 
-                  robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
-                    .header("Authorization", auth)
-                    .header("Content-Type", 'application/json')
-                    .header("Accept", 'application/json')
-                    .post(JSON.stringify(data)) (err, res, body) ->
-                      msg.send "#{issue} has been approved. Awaiting 2nd Approval."
-                else 
-                  msg.send "#{msg.message.user.name} is not a 1st Approver. Please contact @romilly for further information"
-              else if t.name == "Approve (2nd)"
-                transitionId = t.id
+              commentData = {
+                body: "#{comment}Approved by #{msg.message.user.name} (via #changeapprovals slack channel)"
+              }
 
-                currentUser = msg.message.user.name
+              if t.name == "Approve (1st)" && currentUser in firstApprovers
 
-                if currentUser in secondApprovers
-                  data = {
-                    update : {
-                      comment : [{
-                        add : {
-                          body: "2nd Approval by #{msg.message.user.name} (via slack)"
-                        }
-                      }]
-                    },
-                    transition: {
-                        id: "#{transitionId}"
-                    }
-                  }
+                transition = true
+                message = "#{issue} has been approved. Awaiting 2nd Approval. \n\nAttention: " + secondApprovers
 
-                  console.log JSON.stringify(data)
+              else if t.name == "Approve (2nd)" && currentUser in secondApprovers
 
-                  robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
-                    .header("Authorization", auth)
-                    .header("Content-Type", 'application/json')
-                    .header("Accept", 'application/json')
-                    .post(JSON.stringify(data)) (err, res, body) ->
-                      msg.send "#{issue} has been approved. Ready for implementation."
-                else 
-                  msg.send "#{msg.message.user.name} is not a 2nd Approver. Please contact @romilly for further information"
+                transition = true
+                message = "#{issue} has been approved. Ready for Implementation."
+              
 
+              if transition
+                #Transition the issue
+                robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
+                  .header("Authorization", auth)
+                  .header("Content-Type", 'application/json')
+                  .header("Accept", 'application/json')
+                  .post(JSON.stringify(transitionData)) (err, res, body) ->
+                    msg.send message
 
-searchIssues = (robot, msg) ->
+                #Add a comment
+                robot.http("#{url}/rest/api/latest/issue/#{issue}/comment")
+                  .header("Authorization", auth)
+                  .header("Content-Type", 'application/json')
+                  .header("Accept", 'application/json')
+                  .post(JSON.stringify(commentData)) (err, res, body) ->
+                    #console.log err
+
+                break
+              else
+                !err && msg.send "#{issue} could not be approved. It isn't in a valid state, or #{currentUser} doesn't have appropriate permission to approve."
+                err = true
+
+searchIssues = (robot, msg, filter) ->
   user = process.env.HUBOT_JIRA_LOOKUP_USERNAME
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
   url = process.env.HUBOT_JIRA_LOOKUP_URL
-
-  filter = "project+%3D+\"Change+Request\"+AND+status+not+in+(Closed,+Approved,+Declined)"
-  #filter = "project+%3D+\"Change+Request\""
   
   #hack to get jira working
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
@@ -248,11 +254,11 @@ searchIssues = (robot, msg) ->
         total = json.total
 
         if total == 1
-          msg.send "There is #{total} CR awaiting approval."
+          msg.send "#{total} result returned."
         else if total == 0
-          msg.send "There are no CRs awaiting approval."
+          msg.send "No results returned."
         else
-          msg.send "There are #{total} CRs awaiting approval."
+          msg.send "#{total} results returned."
 
         for issue in json.issues
           key = issue.key || ""
@@ -343,13 +349,13 @@ reportIssue = (robot, msg, issue) ->
             style = GetRoomStylePref robot, msg
               
             if style is "long"
-              fallback = "Issue:\t #{data.key.value}: #{data.summary.value}\n"
+              fallback = "*#{data.key.value}: #{data.summary.value}*\n"
               if data.description.value? and inc_desc.toUpperCase() is "Y"
                 if max_len and data.description.value?.length > max_len
-                  fallback += "Description:\t #{data.description.value.substring(0,max_len)} ...\n"
+                  fallback += "*Description:*\n #{data.description.value.substring(0,max_len)} ...\n"
                 else
-                  fallback += "Description:\t #{data.description.value}\n"
-              fallback += "Assignee:\t #{data.assignee.value}\nStatus:\t #{data.status.value}\nLink:\t #{data.link.value}\n"
+                  fallback += "*Description:*\n #{data.description.value}\n"
+              fallback += "*Assignee*: #{data.assignee.value}\n*Status*: #{data.status.value}\n*Link*: #{data.link.value}\n"
             else
               fallback = "#{data.key.value}: #{data.summary.value} [status #{data.status.value}; assigned to #{data.assignee.value} ] #{data.link.value}"
               
