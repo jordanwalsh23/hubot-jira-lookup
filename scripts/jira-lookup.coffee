@@ -16,9 +16,10 @@
 #
 # Commands:
 #   hubot set jira_lookup_style [long|short]
-#   hubot show approvers
-#   hubot pending crs
-#   hubot approved crs
+#   hubot show approvers - shows the list of jira approvers
+#   hubot pending crs - shows the list of pending crs
+#   hubot approved crs - shows the list of approved crs this week
+#   hubot implemented crs - shows the list of implemented crs this week
 #   hubot approve CR-XX [comment]
 #
 # Author:
@@ -133,8 +134,15 @@ module.exports = (robot) ->
   #Displays a listing of the pending CRs from JIRA
   robot.hear /approved crs/i, (msg) ->
 
-    filter = "project+%3D+\"Change+Request\"+and+status+in+(\"Ready+for+Implementation\",+Implemented)+and+createdDate+>+startOfWeek()+order+by+createdDate+asc"
-    msg.send "_Searching jira for CRs that have been approved or implemented this week_\n"
+    filter = "project+%3D+\"Change+Request\"+and+status+in+(\"Ready+for+Implementation\")+and+createdDate+>+startOfWeek()+order+by+createdDate+asc"
+    msg.send "_Searching jira for CRs that have been approved this week_\n"
+    searchIssues robot, msg, filter
+
+  #Displays a listing of the pending CRs from JIRA
+  robot.hear /implemented crs/i, (msg) ->
+
+    filter = "project+%3D+\"Change+Request\"+and+status+in+(\"Implemented\")+and+createdDate+>+startOfWeek()+order+by+createdDate+asc"
+    msg.send "_Searching jira for CRs that have been implemented this week_\n"
     searchIssues robot, msg, filter
 
   #Transition a CR through the workflow
@@ -272,10 +280,11 @@ searchIssues = (robot, msg, filter) ->
           requestor = issue.fields.reporter.displayName || ""
           assignee = issue.fields.assignee.displayName || ""
           startDate = issue.fields.customfield_12431 || ""
+          endDate = issue.fields.customfield_12440 || ""
           status = issue.fields.status.name || ""
           risk = if issue.fields.customfield_12432 then issue.fields.customfield_12432.value else ""
 
-          msg.send "*#{key}: #{summary} (#{status})*\nRequestor: #{requestor}\nRisk: #{risk}\nScheduled Start: #{startDate}\n"
+          msg.send "*#{key}: #{summary}*\nStatus: #{status}\nRequestor: #{requestor}\nRisk: #{risk}\nScheduled Start: #{startDate}\nScheduled End: #{endDate}"
 
       catch error
         msg.send "Something went wrong with the jira lookup.. get @jordan.walsh to check the logs for you."
