@@ -284,9 +284,9 @@ searchIssues = (robot, msg, filter) ->
           status = issue.fields.status.name || ""
           risk = if issue.fields.customfield_12432 then issue.fields.customfield_12432.value else ""
 
-          url = "#{url}/browse/#{key}"
+          issueUrl = "#{url}/browse/#{key}"
 
-          msg.send "*#{key}: #{summary}*\nStatus: #{status}\nRequestor: #{requestor}\nRisk: #{risk}\nScheduled Start: #{startDate}\nScheduled End: #{endDate}\n#{url}\n"
+          msg.send "*#{key}: #{summary}*\nStatus: #{status}\nRequestor: #{requestor}\nRisk: #{risk}\nScheduled Start: #{startDate}\nScheduled End: #{endDate}\n#{issueUrl}\n"
 
       catch error
         msg.send "Something went wrong with the jira lookup.. get @jordan.walsh to check the logs for you."
