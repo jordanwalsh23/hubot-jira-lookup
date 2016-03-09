@@ -119,7 +119,7 @@ module.exports = (robot) ->
   #Display the approvers that are being used
   robot.hear /^(show)?\s?approvers/i, (msg) ->
     firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
-    secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco"]
+    secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco"]
 
     msg.send "*First Approvers (Technical)*: #{firstApprovers}"
     msg.send "*Second Approvers (Business)*: #{secondApprovers}"
@@ -170,7 +170,7 @@ approveIssue = (robot, msg, issue, comment) ->
   url = process.env.HUBOT_JIRA_LOOKUP_URL
 
   firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
-  secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco"]
+  secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco"]
   
   #hack to get jira working
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
