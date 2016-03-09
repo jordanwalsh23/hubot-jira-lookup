@@ -117,7 +117,7 @@ module.exports = (robot) ->
     reportIssue robot, msg, issue for issue in msg.match
 
   #Display the approvers that are being used
-  robot.hear /^(show)?\s?approvers/i, (msg) ->
+  robot.hear /(show)?\s?approvers/i, (msg) ->
     firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
     secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco"]
 
