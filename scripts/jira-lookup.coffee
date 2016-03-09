@@ -117,7 +117,7 @@ module.exports = (robot) ->
     reportIssue robot, msg, issue for issue in msg.match
 
   #Display the approvers that are being used
-  robot.hear /(show)?\s?approvers/i, (msg) ->
+  robot.hear /^(show)?\s?approvers/i, (msg) ->
     firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
     secondApprovers = ["yasir","apetronzio","romilly","alow","aarmani","arussell","franco"]
 
@@ -125,28 +125,28 @@ module.exports = (robot) ->
     msg.send "*Second Approvers (Business)*: #{secondApprovers}"
 
   #Displays a listing of the pending CRs from JIRA
-  robot.hear /pending crs/i, (msg) ->
+  robot.hear /^pending crs/i, (msg) ->
 
     filter = "project+%3D+\"Change+Request\"+AND+status+in+(\"First+Approval\",\"Second+Approval\")+order+by+created+asc"
     msg.send "_Searching jira for CRs that are awaiting approval_\n"
     searchIssues robot, msg, filter
 
   #Displays a listing of the pending CRs from JIRA
-  robot.hear /approved crs/i, (msg) ->
+  robot.hear /^approved crs/i, (msg) ->
 
     filter = "project+%3D+\"Change+Request\"+and+status+in+(\"Ready+for+Implementation\")+and+createdDate+>+startOfWeek()+order+by+createdDate+asc"
     msg.send "_Searching jira for CRs that have been approved this week_\n"
     searchIssues robot, msg, filter
 
   #Displays a listing of the pending CRs from JIRA
-  robot.hear /implemented crs/i, (msg) ->
+  robot.hear /^implemented crs/i, (msg) ->
 
     filter = "project+%3D+\"Change+Request\"+and+status+in+(\"Implemented\")+and+createdDate+>+startOfWeek()+order+by+createdDate+asc"
     msg.send "_Searching jira for CRs that have been implemented this week_\n"
     searchIssues robot, msg, filter
 
   #Transition a CR through the workflow
-  robot.hear /approve\s(\b[a-zA-Z]{2,12}-[0-9]{1,10}\b)\s?(.*)/i, (msg) ->
+  robot.hear /^approve\s(\b[a-zA-Z]{2,12}-[0-9]{1,10}\b)\s?(.*)/i, (msg) ->
     issue = ""
     comment = ""
 
