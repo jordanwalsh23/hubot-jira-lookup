@@ -231,7 +231,7 @@ approveIssue = (robot, msg, issue, comment) ->
               else if t.name == "Approve (2nd)" && currentUser in secondApprovers
 
                 transition = true
-                message = "#{issue} has been approved. Ready for Implementation."
+                message = "#{issue} has been approved. Ready for Implementation.\n#{url}/browse/#{issue}"
               
 
               if transition
