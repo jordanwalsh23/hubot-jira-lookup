@@ -107,14 +107,22 @@ module.exports = (robot) ->
     SetRoomStylePref robot, msg, msg.match[1]
 
   #Responds to any Jira ticket ID
-  robot.hear /\b[a-zA-Z]{2,12}-[0-9]{1,10}\b/ig, (msg) ->
+  robot.hear /display\s(\b[a-zA-Z]{2,12}-[0-9]{1,10}\b)$/i, (msg) ->
 
     return if msg.message.user.name.match(new RegExp(ignored_users, "gi"))
     return if msg.message.match(new RegExp("^approve", "gi"))
 
-    #@robot.logger.debug "Matched: "+msg.match.join(',')
+    #console.log(msg.match)
 
-    reportIssue robot, msg, issue for issue in msg.match
+    issue = ""
+
+    #Get the issue key
+    if msg.match.length > 0
+      issue = msg.match[1]
+
+    #@robot.logger.debug "Matched: "+msg.match.join(',')
+    if !issue then msg.send "Issue not found" else reportIssue robot, msg, issue
+    
 
   #Display the approvers that are being used
   robot.hear /(show)?\s?approvers$/i, (msg) ->
