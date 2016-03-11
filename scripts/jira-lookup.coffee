@@ -177,8 +177,8 @@ approveIssue = (robot, msg, issue, comment) ->
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
   url = process.env.HUBOT_JIRA_LOOKUP_URL
 
-  firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
-  secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco"]
+  firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali","Shell"]
+  secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco","Shell"]
   
   #hack to get jira working
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
@@ -217,22 +217,19 @@ approveIssue = (robot, msg, issue, comment) ->
 
               currentUser = msg.message.user.name
 
-              if comment != "" then comment = currentUser + ": " + comment + "\n\n"
-
-              commentData = {
-                body: "#{comment}Approved by #{msg.message.user.name} (via #changeapprovals slack channel)"
-              }
+              commentNotes = ""
 
               if t.name == "Approve (1st)" && currentUser in firstApprovers
 
                 transition = true
                 message = "#{issue} has been approved. Awaiting 2nd Approval. \n\nAttention: " + secondApprovers + "\n#{url}/browse/#{issue}"
+                commentNotes = "First (Technical) Approval"
 
               else if t.name == "Approve (2nd)" && currentUser in secondApprovers
 
                 transition = true
                 message = "#{issue} has been approved. Ready for Implementation.\n#{url}/browse/#{issue}"
-              
+                commentNotes = "Second (Business) Approval"
 
               if transition
                 #Transition the issue
@@ -242,6 +239,12 @@ approveIssue = (robot, msg, issue, comment) ->
                   .header("Accept", 'application/json')
                   .post(JSON.stringify(transitionData)) (err, res, body) ->
                     msg.send message
+
+                if comment != "" then comment = "*#{currentUser}*: " + comment + "\n\n"
+
+                commentData = {
+                  body: "#{comment}#{commentNotes} given by #{msg.message.user.name} (via #changeapprovals slack channel)"
+                }
 
                 #Add a comment
                 robot.http("#{url}/rest/api/latest/issue/#{issue}/comment")
