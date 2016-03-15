@@ -102,6 +102,16 @@ module.exports = (robot) ->
 
   #console.log "Ignore Users: #{ignored_users}"
 
+  # the expected value of :room is going to vary by adapter, it might be a numeric id, name, token, or some other value
+  robot.router.post '/hubot/changemanagement/:room', (req, res) ->
+    room   = req.params.room
+    data   = if req.body.payload? then JSON.parse req.body.payload else req.body
+    secret = data.secret
+
+    robot.messageRoom room, "I have a secret: #{secret}"
+
+    res.send 'OK'
+
   #Allows a user to modify whether they should display short or long form descriptions
   robot.respond /set jira_lookup_style (long|short)/, (msg) ->
     SetRoomStylePref robot, msg, msg.match[1]
