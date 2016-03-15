@@ -103,12 +103,20 @@ module.exports = (robot) ->
   #console.log "Ignore Users: #{ignored_users}"
 
   # the expected value of :room is going to vary by adapter, it might be a numeric id, name, token, or some other value
-  robot.router.post '/hubot/changemanagement/:room', (req, res) ->
+  robot.router.post '/hubot/jira-cr-webhook/:room', (req, res) ->
+
+    firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
+
     room   = req.params.room
     data   = if req.body.payload? then JSON.parse req.body.payload else req.body
-    secret = data.secret
+    
+    issueKey = data.issue.key
+    user = data.user.displayName
+    summary = data.issue.fields.summary
 
-    robot.messageRoom room, "I have a secret: #{secret}"
+    url = "https://jira.whispir.net:8443/browse/#{issueKey}"
+
+    robot.messageRoom room, "#{user} has proposed #{issueKey} - #{summary}. First Approval Required.\n\nAttention: #{firstApprovers}\n\n#{url}"
 
     res.send 'OK'
 
@@ -187,8 +195,8 @@ approveIssue = (robot, msg, issue, comment) ->
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
   url = process.env.HUBOT_JIRA_LOOKUP_URL
 
-  firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali","Shell"]
-  secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco","Shell"]
+  firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
+  secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco"]
   
   #hack to get jira working
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
