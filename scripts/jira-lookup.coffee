@@ -89,6 +89,11 @@ difference = (obj1, obj2) ->
     diff[room] = pref if room !of obj2
   return diff
 
+getFirstApprovers = () ->
+  return ["manojperera","apetronzio","jordan.walsh","romilly","uali","yasir"]
+
+getSecondApprovers = () ->
+  return ["apetronzio","romilly","alow","aarmani","arussell","franco"]
 #-----------------------------------------------------------------------------#
 
 module.exports = (robot) ->
@@ -105,7 +110,7 @@ module.exports = (robot) ->
   # the expected value of :room is going to vary by adapter, it might be a numeric id, name, token, or some other value
   robot.router.post '/hubot/jira-cr-webhook/:room', (req, res) ->
 
-    firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
+    firstApprovers = getFirstApprovers()
 
     room   = req.params.room
     data   = if req.body.payload? then JSON.parse req.body.payload else req.body
@@ -144,8 +149,8 @@ module.exports = (robot) ->
 
   #Display the approvers that are being used
   robot.hear /(show)?\s?approvers$/i, (msg) ->
-    firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
-    secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco"]
+    firstApprovers = getFirstApprovers()
+    secondApprovers = getSecondApprovers()
 
     msg.send "*First Approvers (Technical)*: #{firstApprovers}"
     msg.send "*Second Approvers (Business)*: #{secondApprovers}"
@@ -195,8 +200,8 @@ approveIssue = (robot, msg, issue, comment) ->
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
   url = process.env.HUBOT_JIRA_LOOKUP_URL
 
-  firstApprovers = ["yasir","manojperera","apetronzio","jordan.walsh","romilly","uali"]
-  secondApprovers = ["apetronzio","romilly","alow","aarmani","arussell","franco"]
+  firstApprovers = getFirstApprovers()
+  secondApprovers = getSecondApprovers()
   
   #hack to get jira working
   process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
