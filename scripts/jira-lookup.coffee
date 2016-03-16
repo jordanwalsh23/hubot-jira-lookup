@@ -33,7 +33,7 @@
 ## Store when a ticket was reported to a channel
 # Key:   channelid-ticketid
 # Value: timestamp
-# 
+#
 LastHeard = {}
 
 RecordLastHeard = (robot,channel,ticket) ->
@@ -50,7 +50,7 @@ CheckLastHeard = (robot,channel,ticket) ->
   diff = now - last
 
   #@robot.logger.debug "Check: #{key} #{diff} #{limit}"
-  
+
   if diff < limit
     return yes
   no
@@ -70,7 +70,7 @@ GetRoomStylePref = (robot, msg) ->
   if rm_style
     return rm_style
   def_style
-  
+
 storePrefToBrain = (robot, room, pref) ->
   robot.brain.data.jiralookupprefs[room] = pref
 
@@ -90,7 +90,7 @@ difference = (obj1, obj2) ->
   return diff
 
 getFirstApprovers = () ->
-  return ["manojperera","jordan.walsh","romilly","uali","yasir","roshan","qatada"]
+  return ["manojperera","jordan.walsh","uali","yasir","roshan","qatada"]
 
 getSecondApprovers = () ->
   return ["apetronzio","romilly","alow","aarmani","arussell","franco","yasir"]
@@ -100,7 +100,7 @@ module.exports = (robot) ->
   robot.brain.data.jiralookupprefs or= {}
   robot.brain.on 'loaded', =>
     syncPrefs robot
-  
+
   ignored_users = process.env.HUBOT_JIRA_LOOKUP_IGNORE_USERS
   if ignored_users == undefined
     ignored_users = "jira|github|bubbles|thanksjen|harold"
@@ -114,7 +114,7 @@ module.exports = (robot) ->
 
     room   = req.params.room
     data   = if req.body.payload? then JSON.parse req.body.payload else req.body
-    
+
     issueKey = data.issue.key
     user = data.user.displayName
     summary = data.issue.fields.summary
@@ -145,7 +145,7 @@ module.exports = (robot) ->
 
     #@robot.logger.debug "Matched: "+msg.match.join(',')
     if !issue then msg.send "Issue not found" else reportIssue robot, msg, issue
-    
+
 
   #Display the approvers that are being used
   robot.hear /(show)?\s?approvers$/i, (msg) ->
@@ -202,9 +202,9 @@ approveIssue = (robot, msg, issue, comment) ->
 
   firstApprovers = getFirstApprovers()
   secondApprovers = getSecondApprovers()
-  
+
   #hack to get jira working
-  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
   auth = 'Basic ' + new Buffer(user + ':' + pass).toString('base64')
 
@@ -217,12 +217,12 @@ approveIssue = (robot, msg, issue, comment) ->
         if json.errorMessages && json.errorMessages.length > 0
           msg.send json.errorMessages[0]
         else
-          
+
           transitions = json.transitions
 
           if transitions.length == 0
             msg.send "#{issue} cannot be approved."
-          else 
+          else
             #find the approval transition
 
             transition = false
@@ -286,9 +286,9 @@ searchIssues = (robot, msg, filter) ->
   user = process.env.HUBOT_JIRA_LOOKUP_USERNAME
   pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
   url = process.env.HUBOT_JIRA_LOOKUP_URL
-  
+
   #hack to get jira working
-  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';  
+  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
 
   auth = 'Basic ' + new Buffer(user + ':' + pass).toString('base64')
 
@@ -324,11 +324,11 @@ searchIssues = (robot, msg, filter) ->
 
       catch error
         msg.send "Something went wrong with the jira lookup.. get @jordan.walsh to check the logs for you."
-        console.log error 
+        console.log error
 
 reportIssue = (robot, msg, issue) ->
   room  = msg.message.user.reply_to || msg.message.user.room
-    
+
   #@robot.logger.debug "Issue: #{issue} in channel #{room}"
 
   return if CheckLastHeard(robot, room, issue)
@@ -397,7 +397,7 @@ reportIssue = (robot, msg, issue) ->
             }
 
             style = GetRoomStylePref robot, msg
-              
+
             if style is "long"
               fallback = "*#{data.key.value}: #{data.summary.value}*\n"
               if data.description.value? and inc_desc.toUpperCase() is "Y"
@@ -408,7 +408,7 @@ reportIssue = (robot, msg, issue) ->
               fallback += "*Assignee*: #{data.assignee.value}\n*Status*: #{data.status.value}\n*Link*: #{data.link.value}\n"
             else
               fallback = "#{data.key.value}: #{data.summary.value} [status #{data.status.value}; assigned to #{data.assignee.value} ] #{data.link.value}"
-              
+
 
             if process.env.HUBOT_SLACK_INCOMING_WEBHOOK?
               if style is "long"
