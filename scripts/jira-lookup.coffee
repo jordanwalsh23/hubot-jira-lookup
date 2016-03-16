@@ -93,7 +93,7 @@ getFirstApprovers = () ->
   return ["manojperera","jordan.walsh","romilly","uali","yasir","roshan","qatada"]
 
 getSecondApprovers = () ->
-  return ["apetronzio","romilly","alow","aarmani","arussell","franco"]
+  return ["apetronzio","romilly","alow","aarmani","arussell","franco","yasir"]
 #-----------------------------------------------------------------------------#
 
 module.exports = (robot) ->
