@@ -173,7 +173,7 @@ module.exports = (robot) ->
   robot.hear /implemented crs$/i, (msg) ->
 
     filter = "project+%3D+\"Change+Request\"+and+status+in+(\"Implemented\")+and+createdDate+>+startOfWeek()+order+by+createdDate+asc"
-    msg.send "_Searching jira for CRs that have been implemented this week_\n"
+    msg.send "_Searching jira for CRs that have been implemented this week..._\n"
     searchIssues robot, msg, filter
 
   #Transition a CR through the workflow
