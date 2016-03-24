@@ -194,103 +194,6 @@ module.exports = (robot) ->
     else
       approveIssue robot, msg, issue, comment
 
-  #Transition a CR through the workflow
-  robot.hear /decline\s(\b[a-zA-Z]{2,12}-[0-9]{1,10}\b)\s?(.*)/i, (msg) ->
-    issue = ""
-    comment = ""
-
-    #Get the issue key
-    if msg.match.length > 0
-      issue = msg.match[1]
-
-    #Get the comment
-    if msg.match.length > 1
-      comment = msg.match[2]
-
-    if issue == ""
-      msg.send "No issue provided to decline. Format is: approve \"issuekey\""
-    else
-      declineIssue robot, msg, issue, comment
-
-declineIssue = (robot, msg, issue, comment) ->
-
-  user = process.env.HUBOT_JIRA_LOOKUP_USERNAME
-  pass = process.env.HUBOT_JIRA_LOOKUP_PASSWORD
-  url = process.env.HUBOT_JIRA_LOOKUP_URL
-
-  firstApprovers = getFirstApprovers()
-  secondApprovers = getSecondApprovers()
-
-  #hack to get jira working
-  process.env['NODE_TLS_REJECT_UNAUTHORIZED'] = '0';
-
-  auth = 'Basic ' + new Buffer(user + ':' + pass).toString('base64')
-
-  robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
-    .headers(Authorization: auth, Accept: 'application/json')
-    .get() (err, res, body) ->
-      try
-        json = JSON.parse(body)
-
-        if json.errorMessages && json.errorMessages.length > 0
-          msg.send json.errorMessages[0]
-        else
-
-          transitions = json.transitions
-
-          if transitions.length == 0
-            msg.send "#{issue} cannot be declined."
-          else
-            #find the approval transition
-
-            transition = false
-            err = false
-            message = ""
-
-            for t in transitions
-              transitionId = t.id
-
-              transitionData = {
-                transition: {
-                    id: "#{transitionId}"
-                }
-              }
-
-              currentUser = msg.message.user.name
-
-              commentNotes = ""
-
-              if t.name == "Decline"
-
-                transition = true
-                message = "#{issue} has been declined by #{msg.message.user.name}. #{comment}"
-
-            if transition
-              #Transition the issue
-              robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
-                .header("Authorization", auth)
-                .header("Content-Type", 'application/json')
-                .header("Accept", 'application/json')
-                .post(JSON.stringify(transitionData)) (err, res, body) ->
-                  msg.send message
-
-              if comment != "" then comment = "*#{currentUser}*: " + comment + "\n\n"
-
-              commentData = {
-                body: "#{comment}. CR Declined by #{msg.message.user.name} (via #changeapprovals slack channel)"
-              }
-
-              #Add a comment
-              robot.http("#{url}/rest/api/latest/issue/#{issue}/comment")
-                .header("Authorization", auth)
-                .header("Content-Type", 'application/json')
-                .header("Accept", 'application/json')
-                .post(JSON.stringify(commentData)) (err, res, body) ->
-                  #console.log err
-            else
-              !err && msg.send "#{issue} could not be declined as the transition is not available."
-              err = true
-
 approveIssue = (robot, msg, issue, comment) ->
 
   user = process.env.HUBOT_JIRA_LOOKUP_USERNAME
@@ -351,31 +254,33 @@ approveIssue = (robot, msg, issue, comment) ->
                 message = "#{issue} has been approved. Ready for Implementation.\n#{url}/browse/#{issue}"
                 commentNotes = "Second (Business) Approval"
 
-            if transition
-              #Transition the issue
-              robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
-                .header("Authorization", auth)
-                .header("Content-Type", 'application/json')
-                .header("Accept", 'application/json')
-                .post(JSON.stringify(transitionData)) (err, res, body) ->
-                  msg.send message
+              if transition
+                #Transition the issue
+                robot.http("#{url}/rest/api/latest/issue/#{issue}/transitions")
+                  .header("Authorization", auth)
+                  .header("Content-Type", 'application/json')
+                  .header("Accept", 'application/json')
+                  .post(JSON.stringify(transitionData)) (err, res, body) ->
+                    msg.send message
 
-              if comment != "" then comment = "*#{currentUser}*: " + comment + "\n\n"
+                if comment != "" then comment = "*#{currentUser}*: " + comment + "\n\n"
 
-              commentData = {
-                body: "#{comment}#{commentNotes} given by #{msg.message.user.name} (via #changeapprovals slack channel)"
-              }
+                commentData = {
+                  body: "#{comment}#{commentNotes} given by #{msg.message.user.name} (via #changeapprovals slack channel)"
+                }
 
-              #Add a comment
-              robot.http("#{url}/rest/api/latest/issue/#{issue}/comment")
-                .header("Authorization", auth)
-                .header("Content-Type", 'application/json')
-                .header("Accept", 'application/json')
-                .post(JSON.stringify(commentData)) (err, res, body) ->
-                  #console.log err
-            else
-              !err && msg.send "#{issue} could not be approved. It isn't in a valid state, or #{currentUser} doesn't have appropriate permission to approve."
-              err = true
+                #Add a comment
+                robot.http("#{url}/rest/api/latest/issue/#{issue}/comment")
+                  .header("Authorization", auth)
+                  .header("Content-Type", 'application/json')
+                  .header("Accept", 'application/json')
+                  .post(JSON.stringify(commentData)) (err, res, body) ->
+                    #console.log err
+
+                break
+              else
+                !err && msg.send "#{issue} could not be approved. It isn't in a valid state, or #{currentUser} doesn't have appropriate permission to approve."
+                err = true
 
 searchIssues = (robot, msg, filter) ->
   user = process.env.HUBOT_JIRA_LOOKUP_USERNAME
