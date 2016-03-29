@@ -90,7 +90,7 @@ difference = (obj1, obj2) ->
   return diff
 
 getFirstApprovers = () ->
-  return ["manojperera","jordan.walsh","uali","yasir","roshan","qatada"]
+  return ["manojperera","jordan.walsh","uali","yasir","roshan","qatada","jaspher"]
 
 getSecondApprovers = () ->
   return ["apetronzio","romilly","alow","aarmani","arussell","franco","yasir"]
