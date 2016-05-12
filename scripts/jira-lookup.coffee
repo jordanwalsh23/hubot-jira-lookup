@@ -93,7 +93,7 @@ getFirstApprovers = () ->
   return ["manojperera","jordan.walsh","uali","yasir","roshan","qatada","jaspher"]
 
 getSecondApprovers = () ->
-  return ["apetronzio","romilly","alow","aarmani","arussell","franco","yasir"]
+  return ["apetronzio","uribudnik","alow","aarmani","franco","yasir"]
 #-----------------------------------------------------------------------------#
 
 module.exports = (robot) ->
@@ -121,7 +121,7 @@ module.exports = (robot) ->
 
     url = "https://jira.whispir.net:8443/browse/#{issueKey}"
 
-    robot.messageRoom room, "#{user} has proposed #{issueKey} - #{summary}. First Approval Required.\n\nAttention: #{firstApprovers}\n\n#{url}"
+    robot.messageRoom room, "#{user} has proposed *#{issueKey} - #{summary}*. First Approval Required. #{url}\n\nAttention: #{firstApprovers}"
 
     res.send 'OK'
 
@@ -245,13 +245,13 @@ approveIssue = (robot, msg, issue, comment) ->
               if t.name == "Approve (1st)" && currentUser in firstApprovers
 
                 transition = true
-                message = "#{issue} has been approved. Awaiting 2nd Approval. \n\nAttention: " + secondApprovers + "\n#{url}/browse/#{issue}"
+                message = "#{issue} has been approved. Awaiting 2nd Approval. #{url}/browse/#{issue}\n\nAttention: " + secondApprovers
                 commentNotes = "First (Technical) Approval"
 
               else if t.name == "Approve (2nd)" && currentUser in secondApprovers
 
                 transition = true
-                message = "#{issue} has been approved. Ready for Implementation.\n#{url}/browse/#{issue}"
+                message = "#{url}/browse/#{issue} has been approved. Ready for Implementation."
                 commentNotes = "Second (Business) Approval"
 
               if transition
