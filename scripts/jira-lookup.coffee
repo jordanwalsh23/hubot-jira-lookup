@@ -90,10 +90,10 @@ difference = (obj1, obj2) ->
   return diff
 
 getFirstApprovers = () ->
-  return ["manojperera","jordan.walsh","uali","yasir","roshan","qatada","jaspher"]
+  return ["manojperera","uali","yasir","roshan","qatada","jaspher","jd"]
 
 getSecondApprovers = () ->
-  return ["apetronzio","uribudnik","alow","aarmani","franco","yasir"]
+  return ["apetronzio","uribudnik","alow","aarmani","jordan.walsh","yasir"]
 #-----------------------------------------------------------------------------#
 
 module.exports = (robot) ->
